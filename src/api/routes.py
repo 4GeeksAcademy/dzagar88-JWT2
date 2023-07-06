@@ -16,3 +16,36 @@ def handle_hello():
     }
 
     return jsonify(response_body), 200
+
+
+@api.route("/signup", methods=["POST"])
+def create_user():
+    body = request.json
+    new_user = User(
+        username=body["username"],
+        password=body["password"]
+    )
+    db.session.add(new_user)
+    db.session.commit()
+    return jsonify(new_user.to_dict()), 201
+
+@api.route("/login", methods=["POST"])
+def handle_login():
+    body = request.json
+    username = body.get("username")
+    password = body.get("password")
+
+    # Perform authentication and validate user credentials
+    user = User.query.filter_by(username=username).first()
+    if user is None or not user.check_password(password):
+        raise APIException("Invalid username or password", 401)
+
+    # Authentication successful, return user information or token
+    return jsonify(user.to_dict()), 200
+
+
+@api.route("/users", methods=["GET"])
+def get_users():
+    users = User.query.all()
+    user_list = [user.to_dict() for user in users]
+    return jsonify(user_list), 200
